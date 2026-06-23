@@ -24,3 +24,31 @@ Pythonの仮想環境立ち上げは`python -m venv venv` で作成し、`source
 仮想環境下でinstallしたのち、`pip freeze > requirements.txt`で書きだせる。
 
 VSCode拡張のWSLの調子が悪い時は履歴を消せばだいたい解決する。`rm -rf ~/.vscode-server/`
+
+### 完成系イメージ
+
+```
+namako-app/ (プロジェクトルート)
+├── frontend/             # フロントエンド (React)
+│   ├── public/           # 静的ファイル（画像、アイコンなど）
+│   ├── src/              # ソースコード
+│   │   ├── components/   # 共通UIパーツ（ボタン、カードなど）
+│   │   ├── pages/        # 画面単位のコンポーネント（栽培画面、図鑑画面）
+│   │   ├── services/     # API通信を管理するロジック（Axiosなど）
+│   │   ├── App.tsx       # 画面全体のルーティング
+│   │   └── main.tsx      # エントリーポイント
+│   ├── package.json      # フロントエンドの依存ライブラリ管理
+│   └── vite.config.ts    # ビルドツール（Vite）の設定
+│
+├── backend/              # バックエンド (Python)
+│   ├── app/
+│   │   ├── database.py   # DB接続・初期化設定
+│   │   ├── models.py     # DBのテーブル定義（SQLAlchemy）
+│   │   ├── schemas.py    # APIでやり取りするデータの型定義（Pydantic）
+│   │   ├── crud.py       # DBを操作するロジック（データ追加・取得）
+│   │   └── main.py       # APIのルート（エンドポイント）設定
+│   ├── Dockerfile        # Renderデプロイ用（またはRender設定で対応）
+│   └── requirements.txt  # Pythonの依存ライブラリ管理
+│
+└── README.md             # プロジェクトの説明書
+```

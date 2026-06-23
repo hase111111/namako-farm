@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # データサーバー（PostgreSQL）の設定
