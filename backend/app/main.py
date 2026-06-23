@@ -1,4 +1,6 @@
+
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from .database import engine, SessionLocal
 from . import models
@@ -7,6 +9,19 @@ from . import models
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="なまこ栽培キット API")
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 2. 各APIでデータベース（セッション）を安全に利用するための仕組み
 def get_db():
