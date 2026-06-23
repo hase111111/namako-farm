@@ -25,6 +25,8 @@ Pythonの仮想環境立ち上げは`python -m venv venv` で作成し、`source
 
 VSCode拡張のWSLの調子が悪い時は履歴を消せばだいたい解決する。`rm -rf ~/.vscode-server/`
 
+Dockerとvenvに移動した状態で`uvicorn app.main:app --reload`でバックエンドのサーバーを立ち上げる。
+
 ### 完成系イメージ
 
 ```

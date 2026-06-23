@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 # 1. Dockerで立ち上げたPostgreSQL（データサーバー）の住所（URL）
 # 構造: postgresql://[ユーザー名]:[パスワード]@[ホスト名]:[ポート番号]/[データベース名]
-SQLALCHEMY_DATABASE_URL = "postgresql://namako_user:password@localhost:5432/namako_db"
+SQLALCHEMY_DATABASE_URL = "postgresql://namako_user:namako_password@localhost:5432/namako_db"
 
 # 2. データベースと通信を行うためのエンジン（心臓部）を作成
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
