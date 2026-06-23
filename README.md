@@ -21,4 +21,6 @@ https://qiita.com/haveAbook/items/0d0ae20a19214f65e7cd
 ### 備忘録
 
 Pythonの仮想環境立ち上げは`python -m venv venv` で作成し、`source venv/bin/activate` で有効化、`deactivate` で無効化する。
+仮想環境下でinstallしたのち、`pip freeze > requirements.txt`で書きだせる。
 
+VSCode拡張のWSLの調子が悪い時は履歴を消せばだいたい解決する。`rm -rf ~/.vscode-server/`
