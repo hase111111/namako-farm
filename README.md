@@ -37,6 +37,8 @@ sudo apt-get install -y nodejs
 node -v
 ```
 
+`npm run dev`でフロントエンドのサーバーを立ち上げる。
+
 ### 完成系イメージ
 
 ```
