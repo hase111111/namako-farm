@@ -64,6 +64,8 @@ export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLo
   const slotExtensionCost = maxVisibleSlots * 50;
   const totalHarvestCount = Object.values(harvestCounts).reduce((a, b) => a + b, 0);
   const prevSlotsRef = useRef<NamakoSlot[]>([]);
+  const aquacultureSectionRef = useRef<HTMLDivElement | null>(null);
+  const dictionarySectionRef = useRef<HTMLElement | null>(null);
 
   // --- 2. 独自ログ追加関数 ---
   const addLog = useCallback((text: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -205,10 +207,14 @@ export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLo
   const handleReleaseIndividual = () => {
     if (selectedSlotId === null || !currentSlot || currentSlot.status !== 'GROWING') return;
 
+    const seed = SEED_PATTERNS.find((pattern) => pattern.id === currentSlot.seedId);
+    const refundMoney = seed?.cost ?? 0;
+
     setConfirmDialog({
       isOpen: true,
-      message: `⚠️ ${selectedSlotId + 1}番水槽のナマコを本当に放流しますか？（成長中の個体は消滅し、マニーは戻りません）`,
+      message: `⚠️ ${selectedSlotId + 1}番水槽のナマコを本当に放流しますか？（成長中の個体は消滅しますが、種苗代の ${refundMoney}M は戻ってきます）`,
       onConfirm: () => {
+        setMoney((prev) => prev + refundMoney);
         setSlots((prevSlots) =>
           prevSlots.map((slot) =>
             slot.id === selectedSlotId 
@@ -216,7 +222,7 @@ export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLo
               : slot
           )
         );
-        addLog(`🌊 ${selectedSlotId + 1}番水槽のナマコを放流しました。`, 'info');
+        addLog(`🌊 ${selectedSlotId + 1}番水槽のナマコを放流しました。${refundMoney}M を返却しました。`, 'info');
         setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
       }
     });
@@ -329,10 +335,17 @@ export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLo
       return;
     }
 
+    const refundMoney = slots.slice(0, maxVisibleSlots).reduce((total, slot) => {
+      if (slot.status !== 'GROWING') return total;
+      const seed = SEED_PATTERNS.find((pattern) => pattern.id === slot.seedId);
+      return total + (seed?.cost ?? 0);
+    }, 0);
+
     setConfirmDialog({
       isOpen: true,
-      message: '⚠️ 【警告】現在養殖中のナマコを【すべて】放流しますか？（完了した個体は残りますが、育成中のものは全消滅します）',
+      message: '⚠️ 【警告】現在養殖中のナマコをすべて放流しますか？養殖完了した個体は残りますが、育成中のものは全消滅します。種苗代は返却されます。',
       onConfirm: () => {
+        setMoney((prev) => prev + refundMoney);
         setSlots((prevSlots) =>
           prevSlots.map((slot) => {
             if (slot.id >= maxVisibleSlots) return slot;
@@ -341,7 +354,7 @@ export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLo
               : slot;
           })
         );
-        addLog('🌊 全水槽の育成中ナマコを一斉放流しました。', 'info');
+        addLog(`🌊 全水槽の育成中ナマコを一斉放流しました。${refundMoney}M を返却しました。`, 'info');
         setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
       }
     });
@@ -359,10 +372,24 @@ export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLo
             🧺 総収穫数: {totalHarvestCount} 匹
           </span>
         </div>
-        <button onClick={onLogout} style={styles.logoutButton}>保存してログアウト</button>
+        <div style={styles.headerActions}>
+          <button
+            onClick={() => aquacultureSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            style={styles.navButton}
+          >
+            養殖へ
+          </button>
+          <button
+            onClick={() => dictionarySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            style={styles.navButton}
+          >
+            図鑑へ
+          </button>
+          <button onClick={onLogout} style={styles.logoutButton}>保存してログアウト</button>
+        </div>
       </header>
 
-      <div style={styles.mainLayout}>
+      <div ref={aquacultureSectionRef} style={styles.mainLayout}>
         {/* 左側：ナマコ表示欄 */}
         <div style={styles.leftColumn}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
@@ -449,7 +476,7 @@ export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLo
                 <h5 style={{ margin: '10px 0 5px 0' }}>🍖 エサをやる</h5>
                 {BAIT_PATTERNS.map((bait) => {
                   const canFeed = currentSlot.status === 'GROWING' && money >= bait.cost;
-                  return <button key={bait.id} onClick={() => handleGiveBaitIndividual(bait.cost, bait.reductionTime)} disabled={!canFeed} style={{ ...styles.subButton, backgroundColor: canFeed ? '#fff' : '#eaeaea', color: canFeed ? '#333' : '#888' }}>{bait.name} ({bait.cost}M)</button>;
+                  return <button key={bait.id} onClick={() => handleGiveBaitIndividual(bait.cost, bait.reductionTime)} disabled={!canFeed} style={{ ...styles.subButton, backgroundColor: canFeed ? '#fff' : '#eaeaea', color: canFeed ? '#333' : '#888' }}>{bait.name} ({bait.cost}M / -{bait.reductionTime}秒)</button>;
                 })}
               </div>
             ) : (
@@ -466,13 +493,13 @@ export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLo
             {/* ★ 変更：引数に seed.id を渡すよう修正 */}
             {SEED_PATTERNS.map((seed) => <button key={seed.id} onClick={() => handlePlantSeedAll(seed.id, seed.cost, seed.growTime)} style={styles.subButton}>全員に「{seed.name}」({seed.cost}M)</button>)}
             <h5 style={{ margin: '15px 0 5px 0' }}>🍖 全一斉エサやり</h5>
-            {BAIT_PATTERNS.map((bait) => <button key={bait.id} onClick={() => handleGiveBaitAll(bait.cost, bait.reductionTime)} style={styles.subButton}>全員に「{bait.name}」({bait.cost}M/匹)</button>)}
+            {BAIT_PATTERNS.map((bait) => <button key={bait.id} onClick={() => handleGiveBaitAll(bait.cost, bait.reductionTime)} style={styles.subButton}>全員に「{bait.name}」({bait.cost}M / -{bait.reductionTime}秒/匹)</button>)}
           </div>
         </div>
       </div>
 
       {/* 図鑑欄 */}
-      <section style={styles.dictionarySection}>
+      <section ref={dictionarySectionRef} style={styles.dictionarySection}>
         <h3>ナマコ図鑑 (解放済み: {unlockedSpeciesIds.length} / {NAMAKO_DICTIONARY.length})</h3>
         <div style={styles.dictionaryGrid}>
           {NAMAKO_DICTIONARY.map((item) => {
@@ -541,9 +568,11 @@ export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLo
 // スタイリング
 const styles: { [key: string]: React.CSSProperties } = {
   pageContainer: { padding: '20px', fontFamily: 'sans-serif', backgroundColor: '#f5f7fb', minHeight: '100vh', position: 'relative' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', marginBottom: '20px' },
+  header: { position: 'sticky', top: '0', zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', backgroundColor: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(8px)', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', marginBottom: '20px' },
   headerLeft: { display: 'flex', gap: '15px', fontSize: '16px', alignItems: 'center', flexWrap: 'wrap' },
+  headerActions: { display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' },
   headerItem: { backgroundColor: '#eee', padding: '5px 15px', borderRadius: '20px' },
+  navButton: { padding: '8px 14px', backgroundColor: '#1e88e5', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' },
   logoutButton: { padding: '8px 16px', backgroundColor: '#e53935', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' },
   mainLayout: { display: 'flex', gap: '20px', marginBottom: '30px' },
   leftColumn: { flex: 3, backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },

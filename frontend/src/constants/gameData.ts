@@ -36,7 +36,7 @@ export const NAMAKO_DICTIONARY: DictionaryItem[] = [
   {
     id: 5,
     name: 'ロイコクロリディウム',
-    flavorText: '眼球に寄生する寄生虫。目から生えている突起は寄生虫の卵の塊で、不気味に蠕動する。\nカタツムリと間違えてナマコに寄生してしまったため、ナマコの目から生えてみた。',
+    flavorText: '眼球に寄生する寄生虫。目から生えている突起は寄生虫の卵の塊で、不気味に蠕動（ぜんどう）する。\nカタツムリと間違えてナマコに寄生してしまったため、ナマコの目から生えてみた。',
     price: 1000,
     image: '/images/namako/namako05.png',
   },
@@ -65,28 +65,28 @@ export const NAMAKO_DICTIONARY: DictionaryItem[] = [
     id: 9,
     name: 'ウミウシ',
     flavorText: '可愛らしい模様をもつ軟体動物。\nナマコになんとなく似ているが、ナマコは棘皮動物であり別種である。',
-    price: 10,
+    price: 6000,
     image: '/images/namako/namako09.png',
   },
   {
     id: 10,
     name: 'あしナマコ',
     flavorText: '己の限界を突破し、足を生やしたナマコ。\n生やしてみたのはいいものの使い方が分からないので、いつもどおり体をくねくねさせて移動している。',
-    price: 1,
+    price: 7500,
     image: '/images/namako/namako10.png',
   },
   {
     id: 11,
     name: 'ナマコモップ',
     flavorText: '言葉通り海の掃除屋として活躍するナマコ。\nちりとり役を探しているが、なかなか見つからない。',
-    price: 5,
+    price: 8888,
     image: '/images/namako/namako11.png',
   },
   {
     id: 12,
     name: 'ナマコもどき',
     flavorText: 'ナマコみたいな模様の石を担ぐゴカイ。\n周囲からはナマコだと思われているが、もはやゴカイを解く気はない。',
-    price: 10,
+    price: 30000,
     image: '/images/namako/namako12.png',
   },
   {
@@ -153,34 +153,38 @@ export const SEED_PATTERNS: SeedPattern[] = [
     id: 1, 
     name: '無料の種苗', 
     cost: 0, 
-    // growTime: 10,
-    growTime: 1,
-    weights: { 1: 60, 2: 25, 3: 15, 4: 2 } // コモン系が高確率
+    growTime: 10,
+    // growTime: 1,
+    weights: { 1: 60, 2: 25, 3: 15, 4: 2 } // Ave 270 +
   },
   { 
     id: 2, 
     name: '普通の種苗', 
-    // cost: 100, 
-    // growTime: 60,
     cost: 200, 
-    growTime: 1,
+    growTime: 60,
+    // cost: 0, 
+    // growTime: 1,
     weights: { 1: 50, 2: 1, 3: 1, 4: 30, 
-               5: 20, 6: 10, 7: 5, 8: 5 }
+               5: 20, 6: 10, 7: 5, 8: 5 }  // Ave 7000 +
   },
   { 
     id: 3, 
     name: 'すごい種苗', 
     cost: 1000, 
     growTime: 300,
-    weights: { 3: 30, 9: 30, 18: 20, 19: 15, 20: 5 } // 黄金ナマコや本物などの激レア
+    // cost: 0, 
+    // growTime: 1,
+    weights: { 1: 30, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 3, 
+      8: 17, 
+      9: 25, 10: 15, 11: 10, 12: 2,}
   }
 ];
 
 // エサボタンの設定（M個）
 export const BAIT_PATTERNS: BaitPattern[] = [
-  { id: 1, name: '普通のハコエサ', cost: 10, reductionTime: 3 }, // 3秒短縮
-  { id: 2, name: '高級プランクトン', cost: 50, reductionTime: 10 } // 10秒短縮
+  { id: 1, name: 'ワカメ', cost: 90, reductionTime: 7 },
+  { id: 2, name: 'プランクトン', cost: 1000, reductionTime: 100 }
 ];
 
 // 養殖スロットの最大数（仕様書より30匹）
-export const MAX_SLOTS = 50;
+export const MAX_SLOTS = 20;
