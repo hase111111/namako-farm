@@ -380,7 +380,13 @@ useEffect(() => {
                   <div style={styles.slotImage}>
                     {slot.status === 'BEFORE' && '🫙'}
                     {slot.status === 'GROWING' && '🐛'}
-                    {slot.status === 'COMPLETED' && (species?.image || '🥒')}
+                    {slot.status === 'COMPLETED' && species && (
+                      <img 
+                        src={species.image} 
+                        alt={species.name} 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                      />
+                    )}
                   </div>
                   <div style={styles.slotTimer}>
                     {slot.status === 'GROWING' ? `${slot.remainingTime}秒` : '--:--'}
@@ -437,7 +443,7 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* 图鉴欄 */}
+      {/* 図鑑欄 */}
       <section style={styles.dictionarySection}>
         <h3>ナマコ図鑑 (解放済み: {unlockedSpeciesIds.length} / {NAMAKO_DICTIONARY.length})</h3>
         <div style={styles.dictionaryGrid}>
@@ -446,11 +452,25 @@ useEffect(() => {
             const count = harvestCounts[item.id] || 0;
             return (
               <div key={item.id} style={styles.dictCard}>
-                <div style={styles.dictImage}>{isUnlocked ? item.image : '❓'}</div>
+                {/* 上側：横幅いっぱいの画像エリア */}
+                <div style={styles.dictImage}>
+                  {isUnlocked ? (
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                    />
+                  ) : (
+                    <span style={{ fontSize: '40px' }}>❓</span>
+                  )}
+                </div>
+                
+                {/* 下側：情報エリア */}
                 <div style={styles.dictInfo}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <h4 style={{ margin: 0 }}>{isUnlocked ? item.name : '？？？？'}</h4>
-                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>収穫数: {isUnlocked ? `${count} 匹` : '0 匹'}</span>
+                  {/* 名前と収穫数を縦、またはすっきりした配置に */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                    <h4 style={{ margin: 0, fontSize: '16px' }}>{isUnlocked ? item.name : '？？？？'}</h4>
+                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>収穫: {isUnlocked ? `${count} 匹` : '0 匹'}</span>
                   </div>
                   <p style={styles.dictFlavor}>{isUnlocked ? item.flavorText : 'まだ収穫したことがないナマコです。'}</p>
                   <p style={styles.dictPrice}>価値: {isUnlocked ? `${item.price} マニー` : '??? マニー'}</p>
@@ -511,7 +531,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   selectedSlot: { borderColor: '#2196F3', backgroundColor: '#E3F2FD', transform: 'scale(1.02)', boxShadow: '0 2px 8px rgba(33,150,243,0.2)' },
   lockedSlot: { backgroundColor: '#eaeaea', borderStyle: 'dashed', borderColor: '#ccc' },
   slotId: { fontSize: '12px', color: '#999', position: 'absolute', top: '4px', left: '6px' },
-  slotImage: { fontSize: '28px', margin: '10px 0' },
+  slotImage: { 
+    width: '100px',       // 幅を固定
+    height: '100px',      // 高さを固定
+    margin: '10px auto', // 中央寄せ
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   slotTimer: { fontSize: '13px', fontWeight: 'bold', color: '#555' },
   slotStatusLabel: { fontSize: '11px', marginTop: '4px', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   controlPanel: { backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
@@ -520,11 +547,39 @@ const styles: { [key: string]: React.CSSProperties } = {
   divider: { margin: '15px 0', border: 'none', borderTop: '1px solid #eee' },
   dictionarySection: { backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
   dictionaryGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginTop: '15px' },
-  dictCard: { display: 'flex', border: '1px solid #e0e0e0', borderRadius: '6px', padding: '10px', backgroundColor: '#fdfdfd' },
-  dictImage: { fontSize: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '60px', backgroundColor: '#f0f0f0', borderRadius: '4px', marginRight: '15px' },
-  dictInfo: { flex: 1 },
-  dictFlavor: { fontSize: '12px', color: '#666', margin: '5px 0' },
-  dictPrice: { fontSize: '13px', fontWeight: 'bold', color: '#2e7d32', margin: '0' },
+  
+  // ★ 縦長カードに変更
+  dictCard: { 
+    display: 'flex', 
+    flexDirection: 'column', // 子要素を縦に並べる
+    border: '1px solid #e0e0e0', 
+    borderRadius: '8px', 
+    backgroundColor: '#fdfdfd',
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+  },
+  
+  // ★ 上部を横幅いっぱいの画像エリアにする
+  dictImage: { 
+    width: '100%', 
+    height: '160px', // ここで画像の表示高さを調整（お好みで変更してください）
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    backgroundColor: '#f0f0f0', 
+    borderBottom: '1px solid #e0e0e0'
+  },
+  
+  // ★ 下部のテキストエリアの余白を調整
+  dictInfo: { 
+    padding: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    flex: 1
+  },
+  dictFlavor: { fontSize: '12px', color: '#666', margin: '0 0 10px 0', lineHeight: '1.4', whiteSpace: 'pre-wrap' },
+  dictPrice: { fontSize: '13px', fontWeight: 'bold', color: '#2e7d32', margin: 'auto 0 0 0' }, // 一番下に固定
 
   // ★ ゲーム風通知ログ用スタイル
   logContainer: { position: 'fixed', bottom: '20px', right: '20px', display: 'flex', flexDirection: 'column', gap: '8px', zIndex: 1000, pointerEvents: 'none' },

@@ -8,29 +8,148 @@ export const NAMAKO_DICTIONARY: DictionaryItem[] = [
   {
     id: 1,
     name: 'ナマコ',
-    flavorText: '一般的なナマコ。磯でよく見かける。コリコリしておいしい。',
+    flavorText: '普通のナマコ。\n海の掃除屋として活躍している。\n外敵に襲われると体内の臓器を吐き出して囮にする防御行動をとることがある。',
     price: 1,
-    image: '🟢' // ひとまず画像代わりに絵文字を使用
+    image: '/images/namako/namako01.png',
   },
   {
     id: 2,
-    name: 'アカナマコ',
-    flavorText: '少し高級なナマコ。深場に生息しており、青ナマコより柔らかい。',
-    price: 300,
-    image: '🔴'
+    name: 'シロナマコ',
+    flavorText: '真っ白なナマコ。\nその目は何かをやり遂げた後のように穏やかである。\n燃え尽きたぜ...真っ白なナマコにな...',
+    price: 5,
+    image: '/images/namako/namako02.png',
   },
   {
     id: 3,
-    name: 'キンコ（ゴールデン）',
-    flavorText: '滅多に収穫できない黄金のナマコ。見つけると幸運が訪れるという。',
-    price: 1500,
-    image: '👑'
-  }
+    name: '怒りのナマコ',
+    flavorText: '怒りで真っ赤になったナマコ。\n何に対して怒っていたのかは忘れてしまったが、ひっこみがつかなくなっちゃったようだ。',
+    price: 10,
+    image: '/images/namako/namako03.png',
+  },
+  {
+    id: 4,
+    name: 'トゲナマコ',
+    flavorText: 'とげとげしい見た目のナマコ。\n見た目と裏腹に、性格はおとなしい。',
+    price: 1,
+    image: '/images/namako/namako04.png',
+  },
+  {
+    id: 5,
+    name: 'ロイコクロリディウム',
+    flavorText: '眼球に寄生する寄生虫。目から生えている突起は寄生虫の卵の塊で、不気味に蠕動する。\nカタツムリと間違えてナマコに寄生してしまったため、ナマコの目から生えてみた。',
+    price: 5,
+    image: '/images/namako/namako05.png',
+  },
+  {
+    id: 6,
+    name: '二日酔いナマコ',
+    flavorText: '調子に乗って飲みすぎてしまったナマコ。\n内臓を全て吐き出したが、まだ気持ち悪い。\n今日はスポドリを飲んで寝るしかないのだ。',
+    price: 10,
+    image: '/images/namako/namako06.png',
+  },
+  {
+    id: 7,
+    name: 'はだかのナマコ',
+    flavorText: '体表にトゲがなく、つるつるしたナマコ。\n\nなんか...恥ずかしいっすね///。',
+    price: 1,
+    image: '/images/namako/namako07.png',
+  },
+  {
+    id: 8,
+    name: 'ナマコの集合体',
+    flavorText: '複数のナマコが融合したナマコ。\n内部で統率がとれていないため、徐々に崩壊していく運命にある。',
+    price: 1,
+    image: '/images/namako/namako08.png',
+  },
+  {
+    id: 9,
+    name: 'ウミウシ',
+    flavorText: '可愛らしい模様をもつ軟体動物。\nナマコになんとなく似ているが、ナマコは棘皮動物であり別種である。',
+    price: 10,
+    image: '/images/namako/namako09.png',
+  },
+  {
+    id: 10,
+    name: 'あしナマコ',
+    flavorText: '己の限界を突破し、足を生やしたナマコ。\n生やしてみたのはいいものの使い方が分からないので、いつもどおり体をくねくねさせて移動している。',
+    price: 1,
+    image: '/images/namako/namako10.png',
+  },
+  {
+    id: 11,
+    name: 'ナマコモップ',
+    flavorText: '言葉通り海の掃除屋として活躍するナマコ。\nちりとり役を探しているが、なかなか見つからない。',
+    price: 5,
+    image: '/images/namako/namako11.png',
+  },
+  {
+    id: 12,
+    name: 'ナマコもどき',
+    flavorText: 'ナマコみたいな模様の石を担ぐゴカイ。\n周囲からはナマコだと思われているが、もはやゴカイを解く気はない。',
+    price: 10,
+    image: '/images/namako/namako12.png',
+  },
+  {
+    id: 13,
+    name: 'メタルナマコ',
+    flavorText: '金属製のナマコ。\nステンレスを買う金をケチって鉄で作ったため、錆始めている。',
+    price: 1,
+    image: '/images/namako/namako13.png',
+  },
+  {
+    id: 14,
+    name: 'サツマイモ',
+    flavorText: 'ホクホクで甘いサツマイモ。\n冬になると食べたくなるニクイやつ。',
+    price: 5,
+    image: '/images/namako/namako14.png',
+  },
+  {
+    id: 15,
+    name: '紙ナマコ',
+    flavorText: '最近は電子タバコに立場を奪われつつあるナマコ。\n天敵から逃げるため内臓を吐きだした時に、自分の肺の汚さに驚いたが、いまだに禁煙はできていない。',
+    price: 10,
+    image: '/images/namako/namako15.png',
+  },
+  {
+    id: 16,
+    name: 'イルミナマコティ',
+    flavorText: '世界は陰謀と裏切りに満ちている。\nWikipediaを読んで世界の真実に気づいたナマコ。\n大きな眼を持っているが、視野が狭いタイプ。',
+    price: 1,
+    image: '/images/namako/namako16.png',
+  },
+  {
+    id: 17,
+    name: 'さかさまナマコ',
+    flavorText: 'コマナるいてっなにまさかさ\nねだりくっそにえまお るいてしろごろご てみをほます につじうゅき',
+    price: 5,
+    image: '/images/namako/namako17.png',
+  },
+  {
+    id: 18,
+    name: 'ナマコバケーション',
+    flavorText: 'ハワイでバカンスを楽しむナマコ。\n\n当然パスポートは持っていない。',
+    price: 10,
+    image: '/images/namako/namako18.png',
+  },
+    {
+    id: 19,
+    name: '黄金ナマコ',
+    flavorText: '金色に輝くナマコ。\n非常に希少で価値が高い。',
+    price: 5,
+    image: '/images/namako/namako19.png',
+  },
+  {
+    id: 20,
+    name: 'ナマコ（本物）',
+    flavorText: '棘皮動物門ナマコ綱に属する海産無脊椎動物。\n世界に約1500種、日本には約200種が生息している。\n食用としても利用される。',
+    price: 10,
+    image: '/images/namako/namako20.png',
+  },
 ];
 
 // 種苗ボタンの設定（N個）
 export const SEED_PATTERNS: SeedPattern[] = [
-  { id: 1, name: '普通の種苗', cost: 20, growTime: 10 },    // テスト用に10秒
+  { id: 1, name: '普通の種苗', cost: 0, growTime: 10 },    // テスト用に10秒
   { id: 2, name: '高級な種苗', cost: 100, growTime: 30 },   // テスト用に30秒
   { id: 3, name: '幻の種苗', cost: 500, growTime: 60 }      // テスト用に60秒
 ];
