@@ -16,49 +16,49 @@ export const NAMAKO_DICTIONARY: DictionaryItem[] = [
     id: 2,
     name: 'シロナマコ',
     flavorText: '真っ白なナマコ。\nその目は何かをやり遂げた後のように穏やかである。\n燃え尽きたぜ...真っ白なナマコにな...',
-    price: 5,
+    price: 10,
     image: '/images/namako/namako02.png',
   },
   {
     id: 3,
     name: '怒りのナマコ',
     flavorText: '怒りで真っ赤になったナマコ。\n何に対して怒っていたのかは忘れてしまったが、ひっこみがつかなくなっちゃったようだ。',
-    price: 10,
+    price: 50,
     image: '/images/namako/namako03.png',
   },
   {
     id: 4,
     name: 'トゲナマコ',
     flavorText: 'とげとげしい見た目のナマコ。\n見た目と裏腹に、性格はおとなしい。',
-    price: 1,
+    price: 500,
     image: '/images/namako/namako04.png',
   },
   {
     id: 5,
     name: 'ロイコクロリディウム',
     flavorText: '眼球に寄生する寄生虫。目から生えている突起は寄生虫の卵の塊で、不気味に蠕動する。\nカタツムリと間違えてナマコに寄生してしまったため、ナマコの目から生えてみた。',
-    price: 5,
+    price: 1000,
     image: '/images/namako/namako05.png',
   },
   {
     id: 6,
     name: '二日酔いナマコ',
     flavorText: '調子に乗って飲みすぎてしまったナマコ。\n内臓を全て吐き出したが、まだ気持ち悪い。\n今日はスポドリを飲んで寝るしかないのだ。',
-    price: 10,
+    price: 1500,
     image: '/images/namako/namako06.png',
   },
   {
     id: 7,
     name: 'はだかのナマコ',
     flavorText: '体表にトゲがなく、つるつるしたナマコ。\n\nなんか...恥ずかしいっすね///。',
-    price: 1,
+    price: 1841,
     image: '/images/namako/namako07.png',
   },
   {
     id: 8,
     name: 'ナマコの集合体',
     flavorText: '複数のナマコが融合したナマコ。\n内部で統率がとれていないため、徐々に崩壊していく運命にある。',
-    price: 1,
+    price: 5000,
     image: '/images/namako/namako08.png',
   },
   {
@@ -149,9 +149,31 @@ export const NAMAKO_DICTIONARY: DictionaryItem[] = [
 
 // 種苗ボタンの設定（N個）
 export const SEED_PATTERNS: SeedPattern[] = [
-  { id: 1, name: '普通の種苗', cost: 0, growTime: 10 },    // テスト用に10秒
-  { id: 2, name: '高級な種苗', cost: 100, growTime: 30 },   // テスト用に30秒
-  { id: 3, name: '幻の種苗', cost: 500, growTime: 60 }      // テスト用に60秒
+  { 
+    id: 1, 
+    name: '無料の種苗', 
+    cost: 0, 
+    // growTime: 10,
+    growTime: 1,
+    weights: { 1: 60, 2: 25, 3: 15, 4: 2 } // コモン系が高確率
+  },
+  { 
+    id: 2, 
+    name: '普通の種苗', 
+    // cost: 100, 
+    // growTime: 60,
+    cost: 200, 
+    growTime: 1,
+    weights: { 1: 50, 2: 1, 3: 1, 4: 30, 
+               5: 20, 6: 10, 7: 5, 8: 5 }
+  },
+  { 
+    id: 3, 
+    name: 'すごい種苗', 
+    cost: 1000, 
+    growTime: 300,
+    weights: { 3: 30, 9: 30, 18: 20, 19: 15, 20: 5 } // 黄金ナマコや本物などの激レア
+  }
 ];
 
 // エサボタンの設定（M個）
@@ -161,4 +183,4 @@ export const BAIT_PATTERNS: BaitPattern[] = [
 ];
 
 // 養殖スロットの最大数（仕様書より30匹）
-export const MAX_SLOTS = 30;
+export const MAX_SLOTS = 50;

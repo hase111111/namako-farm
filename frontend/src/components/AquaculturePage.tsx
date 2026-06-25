@@ -15,9 +15,29 @@ interface GameLog {
   type: 'success' | 'error' | 'info';
 }
 
+// ★ 追加：重み付きランダム抽選関数
+const getRandomSpeciesIdBySeed = (seedId: number | null): number => {
+  const seed = SEED_PATTERNS.find((s) => s.id === seedId);
+  if (!seed || !seed.weights) return 1; // デフォルトは普通のナマコ(ID:1)
+
+  const weights = seed.weights;
+  const totalWeight = Object.values(weights).reduce((sum, w) => sum + w, 0);
+  
+  let random = Math.floor(Math.random() * totalWeight);
+
+  for (const [speciesIdStr, weight] of Object.entries(weights)) {
+    random -= weight;
+    if (random < 0) {
+      return Number(speciesIdStr);
+    }
+  }
+
+  return 1;
+};
+
 export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLogout }) => {
   // --- 1. ゲームの状態（State） ---
-  const [money, setMoney] = useState<number>(500); 
+  const [money, setMoney] = useState<number>(0);  // 仮の初期値
   const [maxVisibleSlots, setMaxVisibleSlots] = useState<number>(10); 
   const [slots, setSlots] = useState<NamakoSlot[]>(
     Array.from({ length: MAX_SLOTS }, (_, index) => ({
@@ -25,14 +45,15 @@ export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLo
       status: 'BEFORE',
       remainingTime: 0,
       speciesId: null,
+      seedId: null, // ★ 追加：種苗IDの初期状態
     }))
   );
   const [unlockedSpeciesIds, setUnlockedSpeciesIds] = useState<number[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
   const [harvestCounts, setHarvestCounts] = useState<{ [key: number]: number }>({ 1: 0, 2: 0, 3: 0 });
 
-  // ーーー ★ ゲーム風UI用の新しいState ーーー
-  const [logs, setLogs] = useState<GameLog[]>([]); // 画面右下のログメッセージ一覧
+  // ーーー ★ ゲーム風UI用のState ーーー
+  const [logs, setLogs] = useState<GameLog[]>([]); 
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     message: string;
@@ -44,65 +65,60 @@ export const AquaculturePage: React.FC<AquaculturePageProps> = ({ username, onLo
   const totalHarvestCount = Object.values(harvestCounts).reduce((a, b) => a + b, 0);
   const prevSlotsRef = useRef<NamakoSlot[]>([]);
 
-// --- 2. 独自ログ追加関数（同時発火バグ修正版） ---
-const addLog = useCallback((text: string, type: 'success' | 'error' | 'info' = 'info') => {
-  // ★ Date.now() だけでなく、ランダムな文字列を混ぜて絶対に重複しないIDにする
-  const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  
-  setLogs((prev) => {
-    const nextLogs = [...prev, { id: uniqueId as any, text, type }];
-    return nextLogs.slice(-7);
-  });
-  
-  // 2秒後に自動で消えるタイマー
-  setTimeout(() => {
-    setLogs((prev) => prev.filter((log) => (log.id as any) !== uniqueId));
-  }, 2000);
-}, []);
+  // --- 2. 独自ログ追加関数 ---
+  const addLog = useCallback((text: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    setLogs((prev) => {
+      const nextLogs = [...prev, { id: uniqueId as any, text, type }];
+      return nextLogs.slice(-7);
+    });
+    
+    setTimeout(() => {
+      setLogs((prev) => prev.filter((log) => (log.id as any) !== uniqueId));
+    }, 2000);
+  }, []);
 
   useEffect(() => {
-  slots.forEach((slot) => {
-    const prevSlot = prevSlotsRef.current.find((s) => s.id === slot.id);
-    
-    // 「前回は養殖中（GROWING）」で「今回は完了（COMPLETED）」に切り替わった瞬間だけを検知
-    if (prevSlot && prevSlot.status === 'GROWING' && slot.status === 'COMPLETED' && slot.speciesId !== null) {
-      const chosen = NAMAKO_DICTIONARY.find((s) => s.id === slot.speciesId);
-      if (chosen) {
-        addLog(`🔔 水槽 ${slot.id + 1}番のナマコが「${chosen.name}」に成長しました！`, 'info');
-      }
-    }
-  });
-  
-  // 現在の状態をリファレンスに保存
-  prevSlotsRef.current = slots;
-}, [slots, addLog]);
-
-// --- 3. 時間経過（タイマーロジック） ---
-useEffect(() => {
-  const timer = setInterval(() => {
-    setSlots((prevSlots) =>
-      prevSlots.map((slot) => {
-        if (slot.status !== 'GROWING' || slot.remainingTime <= 0) return slot;
-
-        const nextTime = slot.remainingTime - 1;
-        if (nextTime <= 0) {
-          const randomIndex = Math.floor(Math.random() * NAMAKO_DICTIONARY.length);
-          const chosen = NAMAKO_DICTIONARY[randomIndex];
-          // ★ ここでは addLog を呼ばず、ステート変化だけを起こす
-          return {
-            ...slot,
-            status: 'COMPLETED',
-            remainingTime: 0,
-            speciesId: chosen.id,
-          };
+    slots.forEach((slot) => {
+      const prevSlot = prevSlotsRef.current.find((s) => s.id === slot.id);
+      
+      if (prevSlot && prevSlot.status === 'GROWING' && slot.status === 'COMPLETED' && slot.speciesId !== null) {
+        const chosen = NAMAKO_DICTIONARY.find((s) => s.id === slot.speciesId);
+        if (chosen) {
+          addLog(`🔔 水槽 ${slot.id + 1}番のナマコが「${chosen.name}」に成長しました！`, 'info');
         }
-        return { ...slot, remainingTime: nextTime };
-      })
-    );
-  }, 1000);
+      }
+    });
+    
+    prevSlotsRef.current = slots;
+  }, [slots, addLog]);
 
-  return () => clearInterval(timer);
-}, []);
+  // --- 3. 時間経過（タイマーロジック） ---
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSlots((prevSlots) =>
+        prevSlots.map((slot) => {
+          if (slot.status !== 'GROWING' || slot.remainingTime <= 0) return slot;
+
+          const nextTime = slot.remainingTime - 1;
+          if (nextTime <= 0) {
+            // ★ 変更：全種類から完全ランダムではなく、種苗に応じた重み付き抽選に変更
+            const chosenSpeciesId = getRandomSpeciesIdBySeed(slot.seedId);
+            return {
+              ...slot,
+              status: 'COMPLETED',
+              remainingTime: 0,
+              speciesId: chosenSpeciesId,
+            };
+          }
+          return { ...slot, remainingTime: nextTime };
+        })
+      );
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   // --- 4. 拡張アクション ---
   const handleExtendSlot = () => {
@@ -117,7 +133,8 @@ useEffect(() => {
   };
 
   // --- 5. 個別操作アクション ---
-  const handlePlantSeedIndividual = (cost: number, growTime: number) => {
+  // ★ 変更：引数に seedId を追加
+  const handlePlantSeedIndividual = (seedId: number, cost: number, growTime: number) => {
     if (selectedSlotId === null || !currentSlot || currentSlot.status !== 'BEFORE') return;
     if (money < cost) {
       addLog('❌ マニーが足りません！', 'error');
@@ -127,7 +144,9 @@ useEffect(() => {
     setMoney((prev) => prev - cost);
     setSlots((prevSlots) =>
       prevSlots.map((slot) =>
-        slot.id === selectedSlotId ? { ...slot, status: 'GROWING' as const, remainingTime: growTime, speciesId: null } : slot
+        slot.id === selectedSlotId 
+          ? { ...slot, status: 'GROWING' as const, remainingTime: growTime, speciesId: null, seedId: seedId } // ★ seedIdを保存
+          : slot
       )
     );
     addLog(`🌱 ${selectedSlotId + 1}番水槽に種苗を植えました。`, 'success');
@@ -146,8 +165,9 @@ useEffect(() => {
         if (slot.id === selectedSlotId) {
           const nextTime = Math.max(0, slot.remainingTime - reductionTime);
           if (nextTime === 0) {
-            const randomIndex = Math.floor(Math.random() * NAMAKO_DICTIONARY.length);
-            return { ...slot, status: 'COMPLETED' as const, remainingTime: 0, speciesId: NAMAKO_DICTIONARY[randomIndex].id };
+            // ★ 変更：エサやりで即完了した際も重み付き抽選を適用
+            const chosenSpeciesId = getRandomSpeciesIdBySeed(slot.seedId);
+            return { ...slot, status: 'COMPLETED' as const, remainingTime: 0, speciesId: chosenSpeciesId };
           }
           return { ...slot, remainingTime: nextTime };
         }
@@ -175,12 +195,13 @@ useEffect(() => {
 
     setSlots((prevSlots) =>
       prevSlots.map((slot) =>
-        slot.id === selectedSlotId ? { ...slot, status: 'BEFORE' as const, remainingTime: 0, speciesId: null } : slot
+        slot.id === selectedSlotId 
+          ? { ...slot, status: 'BEFORE' as const, remainingTime: 0, speciesId: null, seedId: null } // ★ seedIdをリセット
+          : slot
       )
     );
   };
 
-  // 個別放流（カスタムconfirmダイアログを使用）
   const handleReleaseIndividual = () => {
     if (selectedSlotId === null || !currentSlot || currentSlot.status !== 'GROWING') return;
 
@@ -190,7 +211,9 @@ useEffect(() => {
       onConfirm: () => {
         setSlots((prevSlots) =>
           prevSlots.map((slot) =>
-            slot.id === selectedSlotId ? { ...slot, status: 'BEFORE' as const, remainingTime: 0, speciesId: null } : slot
+            slot.id === selectedSlotId 
+              ? { ...slot, status: 'BEFORE' as const, remainingTime: 0, speciesId: null, seedId: null } // ★ seedIdをリセット
+              : slot
           )
         );
         addLog(`🌊 ${selectedSlotId + 1}番水槽のナマコを放流しました。`, 'info');
@@ -200,7 +223,8 @@ useEffect(() => {
   };
 
   // --- 6. 全体一括操作アクション ---
-  const handlePlantSeedAll = (cost: number, growTime: number) => {
+  // ★ 変更：引数に seedId を追加
+  const handlePlantSeedAll = (seedId: number, cost: number, growTime: number) => {
     let currentMoney = money;
     let plantedCount = 0;
 
@@ -209,7 +233,7 @@ useEffect(() => {
       if (slot.status === 'BEFORE' && currentMoney >= cost) {
         currentMoney -= cost;
         plantedCount++;
-        return { ...slot, status: 'GROWING' as const, remainingTime: growTime, speciesId: null };
+        return { ...slot, status: 'GROWING' as const, remainingTime: growTime, speciesId: null, seedId: seedId }; // ★ seedIdを保存
       }
       return slot;
     });
@@ -242,8 +266,9 @@ useEffect(() => {
         if (slot.id >= maxVisibleSlots || slot.status !== 'GROWING') return slot;
         const nextTime = Math.max(0, slot.remainingTime - reductionTime);
         if (nextTime === 0) {
-          const randomIndex = Math.floor(Math.random() * NAMAKO_DICTIONARY.length);
-          return { ...slot, status: 'COMPLETED' as const, remainingTime: 0, speciesId: NAMAKO_DICTIONARY[randomIndex].id };
+          // ★ 変更：一斉エサやりで即完了した際も重み付き抽選を適用
+          const chosenSpeciesId = getRandomSpeciesIdBySeed(slot.seedId);
+          return { ...slot, status: 'COMPLETED' as const, remainingTime: 0, speciesId: chosenSpeciesId };
         }
         return { ...slot, remainingTime: nextTime };
       })
@@ -267,7 +292,7 @@ useEffect(() => {
             newUnlockedIds.push(species.id);
           }
         }
-        return { ...slot, status: 'BEFORE' as const, remainingTime: 0, speciesId: null };
+        return { ...slot, status: 'BEFORE' as const, remainingTime: 0, speciesId: null, seedId: null }; // ★ seedIdをリセット
       }
       return slot;
     });
@@ -297,7 +322,6 @@ useEffect(() => {
     setSlots(nextSlots);
   };
 
-  // 全体一括放流（カスタムconfirmダイアログを使用）
   const handleReleaseAll = () => {
     const hasGrowing = slots.slice(0, maxVisibleSlots).some((s) => s.status === 'GROWING');
     if (!hasGrowing) {
@@ -312,7 +336,9 @@ useEffect(() => {
         setSlots((prevSlots) =>
           prevSlots.map((slot) => {
             if (slot.id >= maxVisibleSlots) return slot;
-            return slot.status === 'GROWING' ? { ...slot, status: 'BEFORE' as const, remainingTime: 0, speciesId: null } : slot;
+            return slot.status === 'GROWING' 
+              ? { ...slot, status: 'BEFORE' as const, remainingTime: 0, speciesId: null, seedId: null } // ★ seedIdをリセット
+              : slot;
           })
         );
         addLog('🌊 全水槽の育成中ナマコを一斉放流しました。', 'info');
@@ -417,7 +443,8 @@ useEffect(() => {
                 <h5 style={{ margin: '10px 0 5px 0' }}>🌱 種苗する</h5>
                 {SEED_PATTERNS.map((seed) => {
                   const canPlant = currentSlot.status === 'BEFORE' && money >= seed.cost;
-                  return <button key={seed.id} onClick={() => handlePlantSeedIndividual(seed.cost, seed.growTime)} disabled={!canPlant} style={{ ...styles.subButton, backgroundColor: canPlant ? '#fff' : '#eaeaea', color: canPlant ? '#333' : '#888' }}>{seed.name} ({seed.cost}M)</button>;
+                  // ★ 変更：引数に seed.id を渡すよう修正
+                  return <button key={seed.id} onClick={() => handlePlantSeedIndividual(seed.id, seed.cost, seed.growTime)} disabled={!canPlant} style={{ ...styles.subButton, backgroundColor: canPlant ? '#fff' : '#eaeaea', color: canPlant ? '#333' : '#888' }}>{seed.name} ({seed.cost}M)</button>;
                 })}
                 <h5 style={{ margin: '10px 0 5px 0' }}>🍖 エサをやる</h5>
                 {BAIT_PATTERNS.map((bait) => {
@@ -436,7 +463,8 @@ useEffect(() => {
             <button onClick={handleHarvestAll} style={{ ...styles.actionButton, backgroundColor: '#4CAF50' }}>🧺 まとめて収穫する</button>
             <button onClick={handleReleaseAll} style={{ ...styles.actionButton, backgroundColor: '#ff9800' }}>🌊 まとめて放流する</button>
             <h5 style={{ margin: '15px 0 5px 0' }}>🌱 全一斉種苗</h5>
-            {SEED_PATTERNS.map((seed) => <button key={seed.id} onClick={() => handlePlantSeedAll(seed.cost, seed.growTime)} style={styles.subButton}>全員に「{seed.name}」({seed.cost}M)</button>)}
+            {/* ★ 変更：引数に seed.id を渡すよう修正 */}
+            {SEED_PATTERNS.map((seed) => <button key={seed.id} onClick={() => handlePlantSeedAll(seed.id, seed.cost, seed.growTime)} style={styles.subButton}>全員に「{seed.name}」({seed.cost}M)</button>)}
             <h5 style={{ margin: '15px 0 5px 0' }}>🍖 全一斉エサやり</h5>
             {BAIT_PATTERNS.map((bait) => <button key={bait.id} onClick={() => handleGiveBaitAll(bait.cost, bait.reductionTime)} style={styles.subButton}>全員に「{bait.name}」({bait.cost}M/匹)</button>)}
           </div>
@@ -452,7 +480,6 @@ useEffect(() => {
             const count = harvestCounts[item.id] || 0;
             return (
               <div key={item.id} style={styles.dictCard}>
-                {/* 上側：横幅いっぱいの画像エリア */}
                 <div style={styles.dictImage}>
                   {isUnlocked ? (
                     <img 
@@ -465,9 +492,7 @@ useEffect(() => {
                   )}
                 </div>
                 
-                {/* 下側：情報エリア */}
                 <div style={styles.dictInfo}>
-                  {/* 名前と収穫数を縦、またはすっきりした配置に */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
                     <h4 style={{ margin: 0, fontSize: '16px' }}>{isUnlocked ? item.name : '？？？？'}</h4>
                     <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>収穫: {isUnlocked ? `${count} 匹` : '0 匹'}</span>
@@ -481,9 +506,7 @@ useEffect(() => {
         </div>
       </section>
 
-      {/* ーーー ★ ゲーム風 カスタムUIコンポーネントのレンダリング ーーー */}
-
-      {/* 1. 画面右下のリアルタイムログ */}
+      {/* リアルタイムログ */}
       <div style={styles.logContainer}>
         {logs.map((log) => (
           <div
@@ -498,7 +521,7 @@ useEffect(() => {
         ))}
       </div>
 
-      {/* 2. 画面中央のゲーム風確認ダイアログ */}
+      {/* ゲーム風確認ダイアログ */}
       {confirmDialog.isOpen && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalBox}>
@@ -515,7 +538,7 @@ useEffect(() => {
   );
 };
 
-// スタイリングの追加・調整
+// スタイリング
 const styles: { [key: string]: React.CSSProperties } = {
   pageContainer: { padding: '20px', fontFamily: 'sans-serif', backgroundColor: '#f5f7fb', minHeight: '100vh', position: 'relative' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', marginBottom: '20px' },
@@ -531,14 +554,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   selectedSlot: { borderColor: '#2196F3', backgroundColor: '#E3F2FD', transform: 'scale(1.02)', boxShadow: '0 2px 8px rgba(33,150,243,0.2)' },
   lockedSlot: { backgroundColor: '#eaeaea', borderStyle: 'dashed', borderColor: '#ccc' },
   slotId: { fontSize: '12px', color: '#999', position: 'absolute', top: '4px', left: '6px' },
-  slotImage: { 
-    width: '100px',       // 幅を固定
-    height: '100px',      // 高さを固定
-    margin: '10px auto', // 中央寄せ
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
+  slotImage: { width: '100px', height: '100px', margin: '10px auto', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   slotTimer: { fontSize: '13px', fontWeight: 'bold', color: '#555' },
   slotStatusLabel: { fontSize: '11px', marginTop: '4px', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   controlPanel: { backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
@@ -547,45 +563,13 @@ const styles: { [key: string]: React.CSSProperties } = {
   divider: { margin: '15px 0', border: 'none', borderTop: '1px solid #eee' },
   dictionarySection: { backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
   dictionaryGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginTop: '15px' },
-  
-  // ★ 縦長カードに変更
-  dictCard: { 
-    display: 'flex', 
-    flexDirection: 'column', // 子要素を縦に並べる
-    border: '1px solid #e0e0e0', 
-    borderRadius: '8px', 
-    backgroundColor: '#fdfdfd',
-    overflow: 'hidden',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-  },
-  
-  // ★ 上部を横幅いっぱいの画像エリアにする
-  dictImage: { 
-    width: '100%', 
-    height: '160px', // ここで画像の表示高さを調整（お好みで変更してください）
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    backgroundColor: '#f0f0f0', 
-    borderBottom: '1px solid #e0e0e0'
-  },
-  
-  // ★ 下部のテキストエリアの余白を調整
-  dictInfo: { 
-    padding: '12px',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    flex: 1
-  },
+  dictCard: { display: 'flex', flexDirection: 'column', border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#fdfdfd', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
+  dictImage: { width: '100%', height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0', borderBottom: '1px solid #e0e0e0' },
+  dictInfo: { padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 },
   dictFlavor: { fontSize: '12px', color: '#666', margin: '0 0 10px 0', lineHeight: '1.4', whiteSpace: 'pre-wrap' },
-  dictPrice: { fontSize: '13px', fontWeight: 'bold', color: '#2e7d32', margin: 'auto 0 0 0' }, // 一番下に固定
-
-  // ★ ゲーム風通知ログ用スタイル
+  dictPrice: { fontSize: '13px', fontWeight: 'bold', color: '#2e7d32', margin: 'auto 0 0 0' },
   logContainer: { position: 'fixed', bottom: '20px', right: '20px', display: 'flex', flexDirection: 'column', gap: '8px', zIndex: 1000, pointerEvents: 'none' },
   logToast: { color: '#fff', padding: '12px 20px', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', maxWidth: '350px', animation: 'fadeInUp 0.3s ease' },
-
-  // ★ ゲーム風確認ダイアログ用スタイル
   modalOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000 },
   modalBox: { backgroundColor: '#fff', padding: '25px', borderRadius: '8px', width: '400px', maxWidth: '90%', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', border: '3px solid #ff9800', textAlign: 'center' },
   modalActions: { display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px' },
